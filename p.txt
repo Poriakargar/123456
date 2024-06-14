@@ -1,0 +1,57 @@
+using System;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
+
+namespace ChatServer
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            Console.WriteLine("Chat Server started");
+
+            // Create a TCP listener
+            TcpListener listener = new TcpListener(IPAddress.Any, 8080);
+            listener.Start();
+
+            while (true)
+            {
+                // Wait for a client to connect
+                TcpClient client = listener.AcceptTcpClient();
+
+                Console.WriteLine("Client connected");
+
+                // Create a new thread to handle the client
+                Thread clientThread = new Thread(() => HandleClient(client));
+                clientThread.Start();
+            }
+        }
+
+        static void HandleClient(TcpClient client)
+        {
+            NetworkStream stream = client.GetStream();
+
+            while (true)
+            {
+                // Read data from the client
+                byte[] buffer = new byte[1024];
+                int bytesRead = stream.Read(buffer, 0, buffer.Length);
+
+                if (bytesRead == 0)
+                    break;
+
+                // Convert the data to a string
+                string message = Encoding.ASCII.GetString(buffer, 0, bytesRead);
+
+                Console.WriteLine("Received message: " + message);
+
+                // Send the message back to the client
+                byte[] response = Encoding.ASCII.GetBytes(message);
+                stream.Write(response, 0, response.Length);
+            }
+
+            Console.WriteLine("Client disconnected");
+        }
+    }
+}
